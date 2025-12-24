@@ -5,27 +5,25 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
-import useAuthStore from './store';
+
+// Check authentication from localStorage
+function isAuthenticated() {
+  return !!localStorage.getItem('access_token');
+}
 
 // Protected route wrapper
 function ProtectedRoute({ children }) {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  
-  if (!isAuthenticated) {
+  if (!isAuthenticated()) {
     return <Navigate to="/login" replace />;
   }
-  
   return children;
 }
 
 // Public route (redirect if authenticated)
 function PublicRoute({ children }) {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  
-  if (isAuthenticated) {
+  if (isAuthenticated()) {
     return <Navigate to="/dashboard" replace />;
   }
-  
   return children;
 }
 

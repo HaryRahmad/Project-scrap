@@ -1,14 +1,14 @@
 import { Link, useNavigate } from 'react-router-dom';
-import useAuthStore from '../store';
 
 export default function Navbar() {
-  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
 
-  const handleLogout = () => {
-    logout();
+  function handleLogout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('user');
     navigate('/login');
-  };
+  }
 
   return (
     <nav className="bg-gray-800/50 backdrop-blur-md border-b border-gray-700">

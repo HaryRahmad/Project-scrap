@@ -1,42 +1,59 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { authApi } from '../helpers/api';
-import useAuthStore from '../store';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import api from '../helpers/api';
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const setAuth = useAuthStore(state => state.setAuth);
+  const location = useLocation();
 
-  const handleSubmit = async (e) => {
+  useEffect(() => {
+    // Check for success message from registration
+    if (location.state?.message) {
+      setSuccess(location.state.message);
+    }
+  }, [location]);
+
+  async function handleLogin(e) {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      const { data } = await authApi.login(formData);
-      setAuth(data.data.user, data.data.access_token);
+      const { data } = await api.post('/api/auth/login', formData);
+      
+      // Save token to localStorage
+      localStorage.setItem('access_token', data.data.access_token);
+      localStorage.setItem('user', JSON.stringify(data.data.user));
+      
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.message || 'Login gagal');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="bg-gray-800/50 backdrop-blur-md rounded-2xl p-8 border border-gray-700">
       <h2 className="text-2xl font-bold text-white mb-6">Login</h2>
       
+      {success && (
+        <div className="bg-green-500/20 border border-green-500 text-green-400 px-4 py-3 rounded-lg mb-4">
+          {success}
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-500/20 border border-red-500 text-red-400 px-4 py-3 rounded-lg mb-4">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleLogin} className="space-y-4">
         <div>
           <label className="block text-gray-400 text-sm mb-2">Email</label>
           <input

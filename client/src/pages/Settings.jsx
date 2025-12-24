@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { settingsApi, locationApi } from '../helpers/api';
+import { useNavigate } from 'react-router-dom';
+import api from '../helpers/api';
 
 const WEIGHT_OPTIONS = [
   '0.5 gr', '1 gr', '2 gr', '3 gr', '5 gr', 
@@ -19,16 +20,21 @@ export default function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  async function fetchData() {
     try {
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const headers = { Authorization: `Bearer ${token}` };
+
       const [settingsRes, locationsRes] = await Promise.all([
-        settingsApi.get().catch(() => ({ data: { data: null } })),
-        locationApi.getAll()
+        api.get('/api/settings', { headers }).catch(() => ({ data: { data: null } })),
+        api.get('/api/locations')
       ]);
 
       setLocations(locationsRes.data.data || []);
@@ -40,18 +46,26 @@ export default function Settings() {
           locationId: s.locationId || '',
           locationName: s.locationName || '',
           targetWeights: s.targetWeights || [],
-          telegramChatId: s.user?.telegramChatId || '',
+          telegramChatId: '',
           isActive: s.isActive ?? true
         });
       }
     } catch (err) {
-      console.error(err);
+      if (err.response?.status === 401) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        navigate('/login');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const handleLocationChange = (e) => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  function handleLocationChange(e) {
     const locationId = e.target.value;
     const location = locations.find(l => l.locationId === locationId);
     setFormData({
@@ -59,22 +73,25 @@ export default function Settings() {
       locationId,
       locationName: location?.name || ''
     });
-  };
+  }
 
-  const handleWeightToggle = (weight) => {
+  function handleWeightToggle(weight) {
     const weights = formData.targetWeights.includes(weight)
       ? formData.targetWeights.filter(w => w !== weight)
       : [...formData.targetWeights, weight];
     setFormData({ ...formData, targetWeights: weights });
-  };
+  }
 
-  const handleSubmit = async (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
     setSaving(true);
     setMessage({ type: '', text: '' });
 
     try {
-      await settingsApi.update(formData);
+      const token = localStorage.getItem('access_token');
+      await api.put('/api/settings', formData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       setMessage({ type: 'success', text: 'Settings berhasil disimpan!' });
     } catch (err) {
       setMessage({ 
@@ -84,7 +101,7 @@ export default function Settings() {
     } finally {
       setSaving(false);
     }
-  };
+  }
 
   if (loading) {
     return (

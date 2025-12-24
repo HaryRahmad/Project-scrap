@@ -1,23 +1,40 @@
 import { useState, useEffect } from 'react';
-import { stockApi } from '../helpers/api';
+import { useNavigate } from 'react-router-dom';
+import api from '../helpers/api';
 import StockCard from '../components/StockCard';
 
 export default function Dashboard() {
   const [stock, setStock] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-  const fetchStock = async () => {
+  async function fetchStock() {
     try {
-      const { data } = await stockApi.get();
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        navigate('/login');
+        return;
+      }
+
+      const { data } = await api.get('/api/stock', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
       setStock(data.data);
       setError('');
     } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        navigate('/login');
+        return;
+      }
       setError(err.response?.data?.message || 'Gagal mengambil data stok');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   useEffect(() => {
     fetchStock();

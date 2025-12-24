@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authApi } from '../helpers/api';
+import api from '../helpers/api';
 
 export default function Register() {
   const [formData, setFormData] = useState({ 
@@ -13,7 +13,7 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  async function handleRegister(e) {
     e.preventDefault();
     setError('');
 
@@ -25,18 +25,19 @@ export default function Register() {
     setLoading(true);
 
     try {
-      await authApi.register({
+      await api.post('/api/auth/register', {
         email: formData.email,
         password: formData.password,
         telegramChatId: formData.telegramChatId || null
       });
+      
       navigate('/login', { state: { message: 'Registrasi berhasil! Silakan login.' } });
     } catch (err) {
       setError(err.response?.data?.message || 'Registrasi gagal');
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="bg-gray-800/50 backdrop-blur-md rounded-2xl p-8 border border-gray-700">
@@ -48,7 +49,7 @@ export default function Register() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleRegister} className="space-y-4">
         <div>
           <label className="block text-gray-400 text-sm mb-2">Email</label>
           <input
