@@ -106,7 +106,7 @@ export default function Settings() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[50vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold-500"></div>
+        <span className="loading loading-spinner loading-lg text-primary"></span>
       </div>
     );
   }
@@ -114,110 +114,105 @@ export default function Settings() {
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Settings</h1>
-        <p className="text-gray-400">Atur preferensi monitoring stok emas Anda</p>
+        <h1 className="text-2xl font-bold">Settings</h1>
+        <p className="text-base-content/60">Atur preferensi monitoring stok emas Anda</p>
       </div>
 
       {message.text && (
-        <div className={`px-4 py-3 rounded-lg ${
-          message.type === 'success' 
-            ? 'bg-green-500/20 border border-green-500 text-green-400'
-            : 'bg-red-500/20 border border-red-500 text-red-400'
-        }`}>
-          {message.text}
+        <div className={`alert ${message.type === 'success' ? 'alert-success' : 'alert-error'}`}>
+          <span>{message.text}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="bg-gray-800/50 backdrop-blur-md rounded-xl p-6 border border-gray-700 space-y-6">
-        {/* Location */}
-        <div>
-          <label className="block text-gray-300 font-medium mb-2">
-            📍 Lokasi Butik
-          </label>
-          <select
-            value={formData.locationId}
-            onChange={handleLocationChange}
-            className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-gold-500 transition-colors"
-          >
-            <option value="">Pilih lokasi...</option>
-            {locations.map(loc => (
-              <option key={loc.locationId} value={loc.locationId}>
-                {loc.name} - {loc.city}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Weight Filter */}
-        <div>
-          <label className="block text-gray-300 font-medium mb-2">
-            ⚖️ Filter Berat Emas
-          </label>
-          <p className="text-gray-500 text-sm mb-3">
-            Pilih berat emas yang ingin dipantau
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {WEIGHT_OPTIONS.map(weight => (
-              <button
-                key={weight}
-                type="button"
-                onClick={() => handleWeightToggle(weight)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  formData.targetWeights.includes(weight)
-                    ? 'bg-gold-500 text-gray-900'
-                    : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                }`}
-              >
-                {weight}
-              </button>
-            ))}
+      <form onSubmit={handleSubmit} className="card bg-base-100 shadow-xl">
+        <div className="card-body space-y-6">
+          {/* Location */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-medium">📍 Lokasi Butik</span>
+            </label>
+            <select
+              value={formData.locationId}
+              onChange={handleLocationChange}
+              className="select select-bordered w-full"
+            >
+              <option value="">Pilih lokasi...</option>
+              {locations.map(loc => (
+                <option key={loc.locationId} value={loc.locationId}>
+                  {loc.name} - {loc.city}
+                </option>
+              ))}
+            </select>
           </div>
-        </div>
 
-        {/* Telegram Chat ID */}
-        <div>
-          <label className="block text-gray-300 font-medium mb-2">
-            📱 Telegram Chat ID
-          </label>
-          <input
-            type="text"
-            value={formData.telegramChatId}
-            onChange={(e) => setFormData({ ...formData, telegramChatId: e.target.value })}
-            className="w-full px-4 py-3 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-gold-500 transition-colors"
-            placeholder="123456789"
-          />
-          <p className="text-gray-500 text-sm mt-1">
-            Dapatkan dari @userinfobot di Telegram untuk menerima notifikasi
-          </p>
-        </div>
-
-        {/* Active Toggle */}
-        <div className="flex items-center justify-between">
-          <div>
-            <label className="text-gray-300 font-medium">Aktifkan Monitoring</label>
-            <p className="text-gray-500 text-sm">Terima notifikasi saat stok tersedia</p>
+          {/* Weight Filter */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-medium">⚖️ Filter Berat Emas</span>
+            </label>
+            <p className="text-base-content/60 text-sm mb-3">
+              Pilih berat emas yang ingin dipantau
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {WEIGHT_OPTIONS.map(weight => (
+                <button
+                  key={weight}
+                  type="button"
+                  onClick={() => handleWeightToggle(weight)}
+                  className={`btn btn-sm ${
+                    formData.targetWeights.includes(weight)
+                      ? 'btn-primary'
+                      : 'btn-outline'
+                  }`}
+                >
+                  {weight}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {/* Telegram Chat ID */}
+          <div className="form-control">
+            <label className="label">
+              <span className="label-text font-medium">📱 Telegram Chat ID</span>
+            </label>
+            <input
+              type="text"
+              value={formData.telegramChatId}
+              onChange={(e) => setFormData({ ...formData, telegramChatId: e.target.value })}
+              className="input input-bordered w-full"
+              placeholder="123456789"
+            />
+            <label className="label">
+              <span className="label-text-alt">Dapatkan dari @userinfobot di Telegram untuk menerima notifikasi</span>
+            </label>
+          </div>
+
+          {/* Active Toggle */}
+          <div className="form-control">
+            <label className="label cursor-pointer">
+              <div>
+                <span className="label-text font-medium">Aktifkan Monitoring</span>
+                <p className="text-base-content/60 text-sm">Terima notifikasi saat stok tersedia</p>
+              </div>
+              <input
+                type="checkbox"
+                checked={formData.isActive}
+                onChange={() => setFormData({ ...formData, isActive: !formData.isActive })}
+                className="toggle toggle-primary"
+              />
+            </label>
+          </div>
+
+          {/* Submit */}
           <button
-            type="button"
-            onClick={() => setFormData({ ...formData, isActive: !formData.isActive })}
-            className={`relative w-14 h-7 rounded-full transition-colors ${
-              formData.isActive ? 'bg-gold-500' : 'bg-gray-600'
-            }`}
+            type="submit"
+            disabled={saving}
+            className="btn btn-primary w-full"
           >
-            <span className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
-              formData.isActive ? 'left-8' : 'left-1'
-            }`}></span>
+            {saving ? <span className="loading loading-spinner"></span> : 'Simpan Settings'}
           </button>
         </div>
-
-        {/* Submit */}
-        <button
-          type="submit"
-          disabled={saving}
-          className="w-full py-3 bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-600 hover:to-gold-700 text-gray-900 font-semibold rounded-lg transition-all disabled:opacity-50"
-        >
-          {saving ? 'Menyimpan...' : 'Simpan Settings'}
-        </button>
       </form>
     </div>
   );
