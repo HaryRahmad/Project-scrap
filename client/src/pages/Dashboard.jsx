@@ -17,19 +17,11 @@ export default function Dashboard() {
         return;
       }
 
-      const { data } = await api.get('/api/stock', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      
+      const { data } = await api.get('/api/stock');
       setStock(data.data);
       setError('');
     } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        navigate('/login');
-        return;
-      }
+      // Auth errors handled by interceptor
       setError(err.response?.data?.message || 'Gagal mengambil data stok');
     } finally {
       setLoading(false);
@@ -41,6 +33,7 @@ export default function Dashboard() {
     const interval = setInterval(fetchStock, 60000);
     return () => clearInterval(interval);
   }, []);
+
 
   if (loading) {
     return (

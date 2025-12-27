@@ -30,10 +30,8 @@ export default function Settings() {
         return;
       }
 
-      const headers = { Authorization: `Bearer ${token}` };
-
       const [settingsRes, locationsRes] = await Promise.all([
-        api.get('/api/settings', { headers }).catch(() => ({ data: { data: null } })),
+        api.get('/api/settings').catch(() => ({ data: { data: null } })),
         api.get('/api/locations')
       ]);
 
@@ -51,11 +49,8 @@ export default function Settings() {
         });
       }
     } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        navigate('/login');
-      }
+      // Auth errors handled by interceptor
+      console.error('Error fetching data:', err.message);
     } finally {
       setLoading(false);
     }
@@ -88,10 +83,7 @@ export default function Settings() {
     setMessage({ type: '', text: '' });
 
     try {
-      const token = localStorage.getItem('access_token');
-      await api.put('/api/settings', formData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await api.put('/api/settings', formData);
       setMessage({ type: 'success', text: 'Settings berhasil disimpan!' });
     } catch (err) {
       setMessage({ 
@@ -102,6 +94,7 @@ export default function Settings() {
       setSaving(false);
     }
   }
+
 
   if (loading) {
     return (

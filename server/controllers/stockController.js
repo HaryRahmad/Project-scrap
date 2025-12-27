@@ -1,4 +1,5 @@
 const { UserSettings, StockCache } = require('../models');
+const NotificationService = require('../services/notificationService');
 
 class StockController {
   static async getStock(req, res, next) {
@@ -90,6 +91,94 @@ class StockController {
       next(error);
     }
   }
+
+  /**
+   * Handle stock update from Checker Bot
+   * POST /api/stock/update
+   * Body: { locationId, locationName, stockData, secret }
+   */
+  static async handleStockUpdate(req, res, next) {
+    try {
+      const { locationId, locationName, stockData, secret } = req.body;
+
+      // Validate checker secret (simple auth)
+      const CHECKER_SECRET = process.env.CHECKER_SECRET;
+      if (CHECKER_SECRET && secret !== CHECKER_SECRET) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized: Invalid checker secret'
+        });
+      }
+
+      if (!locationId || !stockData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required fields: locationId, stockData'
+        });
+      }
+
+      // 1. Upsert to stock_caches
+      await StockCache.upsert({
+        locationId,
+        locationName: locationName || locationId,
+        lastData: stockData
+      });
+
+      console.log(`[Stock] 💾 Saved stock data for ${locationName || locationId}`);
+
+      // 2. Match users and send notifications
+      const result = await NotificationService.handleStockUpdate(
+        locationId,
+        locationName || locationId,
+        stockData
+      );
+
+      res.json({
+        success: true,
+        message: 'Stock update processed',
+        data: {
+          locationId,
+          hasStock: stockData.hasStock || false,
+          notified: result.notified,
+          totalUsers: result.total || 0
+        }
+      });
+
+    } catch (error) {
+      console.error('[Stock] Update error:', error.message);
+      next(error);
+    }
+  }
+
+  /**
+   * Handle blocked notification from Checker
+   * POST /api/stock/blocked
+   */
+  static async handleBlocked(req, res, next) {
+    try {
+      const { secret } = req.body;
+
+      // Validate checker secret
+      const CHECKER_SECRET = process.env.CHECKER_SECRET;
+      if (CHECKER_SECRET && secret !== CHECKER_SECRET) {
+        return res.status(401).json({
+          success: false,
+          message: 'Unauthorized'
+        });
+      }
+
+      await NotificationService.notifyBlocked();
+
+      res.json({
+        success: true,
+        message: 'Blocked notification sent'
+      });
+
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = StockController;
+
