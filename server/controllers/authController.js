@@ -35,13 +35,13 @@ class AuthController {
         telegramChatId: telegramChatId || null
       });
 
-      // Create default settings
+      // Create default settings (inactive - user must setup first)
       await UserSettings.create({
         userId: user.id,
-        locationId: 'jakarta-pulogadung',
-        locationName: 'LM Pulo Gadung',
-        targetWeights: ['1 gr', '5 gr', '10 gr'],
-        isActive: true
+        locationId: '200',
+        locationName: 'Butik Emas LM - Pulo Gadung (Kantor Pusat)',
+        targetWeights: [],
+        isActive: false  // User must activate manually
       });
 
       res.status(201).json({

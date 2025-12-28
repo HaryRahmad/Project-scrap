@@ -84,6 +84,42 @@ const StockCache = sequelize.define('StockCache', {
   updatedAt: 'updated_at'
 });
 
+const Boutique = sequelize.define('Boutique', {
+  locationId: {
+    type: DataTypes.STRING,
+    field: 'location_id',
+    unique: true
+  },
+  name: DataTypes.STRING,
+  city: DataTypes.STRING,
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    field: 'is_active'
+  }
+}, {
+  tableName: 'boutiques',
+  underscored: true
+});
+
+const GoldWeight = sequelize.define('GoldWeight', {
+  weightLabel: {
+    type: DataTypes.STRING,
+    field: 'weight_label',
+    unique: true
+  },
+  weightGram: {
+    type: DataTypes.DECIMAL(10, 2),
+    field: 'weight_gram'
+  },
+  isActive: {
+    type: DataTypes.BOOLEAN,
+    field: 'is_active'
+  }
+}, {
+  tableName: 'gold_weights',
+  underscored: true
+});
+
 // Associations
 User.hasOne(UserSettings, { foreignKey: 'user_id', as: 'settings' });
 UserSettings.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -92,5 +128,8 @@ module.exports = {
   sequelize,
   User,
   UserSettings,
-  StockCache
+  StockCache,
+  Boutique,
+  GoldWeight
 };
+

@@ -3,13 +3,18 @@
 const { Model } = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
-  class Location extends Model {
+  class Boutique extends Model {
     static associate(models) {
-      // No associations
+      // Boutique can have many UserSettings
+      Boutique.hasMany(models.UserSettings, {
+        foreignKey: 'location_id',
+        sourceKey: 'locationId',
+        as: 'userSettings'
+      });
     }
   }
   
-  Location.init({
+  Boutique.init({
     locationId: {
       type: DataTypes.STRING,
       allowNull: false,
@@ -31,10 +36,10 @@ module.exports = (sequelize, DataTypes) => {
     }
   }, {
     sequelize,
-    modelName: 'Location',
-    tableName: 'locations',
+    modelName: 'Boutique',
+    tableName: 'boutiques',
     underscored: true
   });
   
-  return Location;
+  return Boutique;
 };

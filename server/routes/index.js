@@ -1,12 +1,44 @@
-const router = require('express').Router();
-const authRoutes = require('./authRoutes');
-const settingsRoutes = require('./settingsRoutes');
-const stockRoutes = require('./stockRoutes');
-const locationRoutes = require('./locationRoutes');
+/**
+ * API Routes - All endpoints in one file
+ */
 
-router.use('/auth', authRoutes);
-router.use('/settings', settingsRoutes);
-router.use('/stock', stockRoutes);
-router.use('/locations', locationRoutes);
+const router = require('express').Router();
+
+// Controllers
+const AuthController = require('../controllers/authController');
+const SettingsController = require('../controllers/settingsController');
+const StockController = require('../controllers/stockController');
+const MasterController = require('../controllers/masterController');
+
+// Middleware
+const auth = require('../middlewares/auth');
+
+// ============================================
+// AUTH ROUTES (/api/auth)
+// ============================================
+router.post('/auth/register', AuthController.register);
+router.post('/auth/login', AuthController.login);
+router.get('/auth/me', auth, AuthController.getMe);
+
+// ============================================
+// SETTINGS ROUTES (/api/settings)
+// ============================================
+router.get('/settings', auth, SettingsController.getSettings);
+router.put('/settings', auth, SettingsController.updateSettings);
+
+// ============================================
+// STOCK ROUTES (/api/stock)
+// ============================================
+router.get('/stock', auth, StockController.getStock);
+router.get('/stock/all', StockController.getAllStock);
+router.post('/stock/update', StockController.handleStockUpdate);
+router.post('/stock/blocked', StockController.handleBlocked);
+
+// ============================================
+// MASTER DATA ROUTES (/api/master)
+// ============================================
+router.get('/master/boutiques', MasterController.getBoutiques);
+router.get('/master/weights', MasterController.getWeights);
 
 module.exports = router;
+

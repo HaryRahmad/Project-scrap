@@ -2,14 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../helpers/api';
 
-const WEIGHT_OPTIONS = [
-  '0.5 gr', '1 gr', '2 gr', '3 gr', '5 gr', 
-  '10 gr', '25 gr', '50 gr', '100 gr', '250 gr', '500 gr', '1000 gr'
-];
-
 export default function Settings() {
   const [settings, setSettings] = useState(null);
-  const [locations, setLocations] = useState([]);
+  const [boutiques, setBoutiques] = useState([]);
+  const [weightOptions, setWeightOptions] = useState([]);
   const [formData, setFormData] = useState({
     locationId: '',
     locationName: '',
@@ -30,12 +26,14 @@ export default function Settings() {
         return;
       }
 
-      const [settingsRes, locationsRes] = await Promise.all([
+      const [settingsRes, boutiquesRes, weightsRes] = await Promise.all([
         api.get('/api/settings').catch(() => ({ data: { data: null } })),
-        api.get('/api/locations')
+        api.get('/api/master/boutiques'),
+        api.get('/api/master/weights')
       ]);
 
-      setLocations(locationsRes.data.data || []);
+      setBoutiques(boutiquesRes.data.data || []);
+      setWeightOptions(weightsRes.data.data || []);
       
       if (settingsRes.data.data) {
         const s = settingsRes.data.data;
@@ -60,13 +58,14 @@ export default function Settings() {
     fetchData();
   }, []);
 
+
   function handleLocationChange(e) {
     const locationId = e.target.value;
-    const location = locations.find(l => l.locationId === locationId);
+    const boutique = boutiques.find(b => b.locationId === locationId);
     setFormData({
       ...formData,
       locationId,
-      locationName: location?.name || ''
+      locationName: boutique?.name || ''
     });
   }
 
@@ -130,9 +129,9 @@ export default function Settings() {
               className="select select-bordered w-full"
             >
               <option value="">Pilih lokasi...</option>
-              {locations.map(loc => (
-                <option key={loc.locationId} value={loc.locationId}>
-                  {loc.name} - {loc.city}
+              {boutiques.map(boutique => (
+                <option key={boutique.locationId} value={boutique.locationId}>
+                  {boutique.name} - {boutique.city}
                 </option>
               ))}
             </select>
@@ -147,18 +146,18 @@ export default function Settings() {
               Pilih berat emas yang ingin dipantau
             </p>
             <div className="flex flex-wrap gap-2">
-              {WEIGHT_OPTIONS.map(weight => (
+              {weightOptions.map(w => (
                 <button
-                  key={weight}
+                  key={w.weightLabel}
                   type="button"
-                  onClick={() => handleWeightToggle(weight)}
+                  onClick={() => handleWeightToggle(w.weightLabel)}
                   className={`btn btn-sm ${
-                    formData.targetWeights.includes(weight)
+                    formData.targetWeights.includes(w.weightLabel)
                       ? 'btn-primary'
                       : 'btn-outline'
                   }`}
                 >
-                  {weight}
+                  {w.weightLabel}
                 </button>
               ))}
             </div>

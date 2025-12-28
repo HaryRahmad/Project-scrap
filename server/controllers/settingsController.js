@@ -43,13 +43,13 @@ class SettingsController {
           isActive: isActive !== undefined ? isActive : settings.isActive
         });
       } else {
-        // Create new
+        // Create new (inactive by default)
         settings = await UserSettings.create({
           userId,
-          locationId: locationId || 'jakarta-pulogadung',
-          locationName: locationName || 'LM Pulo Gadung',
-          targetWeights: targetWeights || ['1 gr', '5 gr', '10 gr'],
-          isActive: isActive !== undefined ? isActive : true
+          locationId: locationId || '200',
+          locationName: locationName || 'Butik Emas LM - Pulo Gadung (Kantor Pusat)',
+          targetWeights: targetWeights || [],
+          isActive: isActive !== undefined ? isActive : false
         });
       }
 
