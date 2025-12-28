@@ -11,7 +11,7 @@ const StockController = require('../controllers/stockController');
 const MasterController = require('../controllers/masterController');
 
 // Middleware
-const auth = require('../middlewares/auth');
+const auth = require('../middleware/authen');
 
 // ============================================
 // AUTH ROUTES (/api/auth)
