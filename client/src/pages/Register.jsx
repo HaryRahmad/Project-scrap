@@ -7,7 +7,7 @@ export default function Register() {
     email: '', 
     password: '', 
     confirmPassword: '',
-    telegramChatId: ''
+    telegramUsername: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ export default function Register() {
       await api.post('/api/auth/register', {
         email: formData.email,
         password: formData.password,
-        telegramChatId: formData.telegramChatId || null
+        telegramUsername: formData.telegramUsername || null
       });
       
       navigate('/login', { state: { message: 'Registrasi berhasil! Silakan login.' } });
@@ -96,18 +96,21 @@ export default function Register() {
 
           <div className="form-control">
             <label className="label">
-              <span className="label-text">Telegram Chat ID</span>
-              <span className="label-text-alt">(Opsional)</span>
+              <span className="label-text">Username Telegram</span>
             </label>
-            <input
-              type="text"
-              value={formData.telegramChatId}
-              onChange={(e) => setFormData({ ...formData, telegramChatId: e.target.value })}
-              className="input input-bordered w-full"
-              placeholder="123456789"
-            />
+            <label className="input input-bordered flex items-center gap-2 w-full">
+              <span className="text-info font-bold">@</span>
+              <input
+                type="text"
+                value={formData.telegramUsername}
+                onChange={(e) => setFormData({ ...formData, telegramUsername: e.target.value.replace('@', '') })}
+                className="grow bg-transparent border-none outline-none w-full"
+                placeholder="username"
+                required
+              />
+            </label>
             <label className="label">
-              <span className="label-text-alt">Dapatkan dari @userinfobot di Telegram</span>
+              <span className="label-text-alt">Masukkan username Telegram untuk menerima notifikasi</span>
             </label>
           </div>
 
@@ -130,3 +133,4 @@ export default function Register() {
     </div>
   );
 }
+

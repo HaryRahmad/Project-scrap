@@ -22,6 +22,7 @@ export default function Navbar() {
         <ul className="menu menu-horizontal px-1">
           <li><Link to="/dashboard">Dashboard</Link></li>
           <li><Link to="/settings">Settings</Link></li>
+          <li><Link to="/profile">Profile</Link></li>
         </ul>
       </div>
       

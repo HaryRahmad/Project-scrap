@@ -10,7 +10,6 @@ export default function Settings() {
     locationId: '',
     locationName: '',
     targetWeights: [],
-    telegramChatId: '',
     isActive: true
   });
   const [loading, setLoading] = useState(true);
@@ -42,12 +41,10 @@ export default function Settings() {
           locationId: s.locationId || '',
           locationName: s.locationName || '',
           targetWeights: s.targetWeights || [],
-          telegramChatId: '',
           isActive: s.isActive ?? true
         });
       }
     } catch (err) {
-      // Auth errors handled by interceptor
       console.error('Error fetching data:', err.message);
     } finally {
       setLoading(false);
@@ -163,23 +160,6 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Telegram Chat ID */}
-          <div className="form-control">
-            <label className="label">
-              <span className="label-text font-medium">📱 Telegram Chat ID</span>
-            </label>
-            <input
-              type="text"
-              value={formData.telegramChatId}
-              onChange={(e) => setFormData({ ...formData, telegramChatId: e.target.value })}
-              className="input input-bordered w-full"
-              placeholder="123456789"
-            />
-            <label className="label">
-              <span className="label-text-alt">Dapatkan dari @userinfobot di Telegram untuk menerima notifikasi</span>
-            </label>
-          </div>
-
           {/* Active Toggle */}
           <div className="form-control">
             <label className="label cursor-pointer">
@@ -209,3 +189,4 @@ export default function Settings() {
     </div>
   );
 }
+

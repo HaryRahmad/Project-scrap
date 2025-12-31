@@ -1,33 +1,54 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../helpers/api';
+import Swal from 'sweetalert2';
 
 export default function Login() {
   const [formData, setFormData] = useState({ email: '', password: '' });
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
     if (location.state?.message) {
-      setSuccess(location.state.message);
+      Swal.fire({
+        icon: 'success',
+        title: 'Berhasil!',
+        text: location.state.message,
+        timer: 3000,
+        showConfirmButton: false
+      });
     }
   }, [location]);
 
   async function handleLogin(e) {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
       const { data } = await api.post('/api/auth/login', formData);
       localStorage.setItem('access_token', data.data.access_token);
       localStorage.setItem('user', JSON.stringify(data.data.user));
+      
+      await Swal.fire({
+        icon: 'success',
+        title: 'Login Berhasil!',
+        text: 'Selamat datang kembali',
+        timer: 1500,
+        showConfirmButton: false
+      });
+      
       navigate('/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login gagal');
+      const errorMessage = err.response?.data?.message || 'Login gagal';
+      
+      Swal.fire({
+        icon: 'error',
+        title: 'Login Gagal!',
+        text: errorMessage,
+        confirmButtonText: 'Coba Lagi',
+        confirmButtonColor: '#dc2626'
+      });
     } finally {
       setLoading(false);
     }
@@ -37,18 +58,6 @@ export default function Login() {
     <div className="card bg-base-100 shadow-xl">
       <div className="card-body">
         <h2 className="card-title text-2xl justify-center">Login</h2>
-        
-        {success && (
-          <div className="alert alert-success">
-            <span>{success}</span>
-          </div>
-        )}
-
-        {error && (
-          <div className="alert alert-error">
-            <span>{error}</span>
-          </div>
-        )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="form-control">
@@ -98,3 +107,4 @@ export default function Login() {
     </div>
   );
 }
+

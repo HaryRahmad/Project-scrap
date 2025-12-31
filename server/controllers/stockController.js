@@ -178,6 +178,83 @@ class StockController {
       next(error);
     }
   }
+
+  /**
+   * TEST ENDPOINT - Simulate stock found for testing notifications
+   * POST /api/stock/test-notify
+   * Body: { locationId?, weight? }
+   */
+  static async testNotify(req, res, next) {
+    try {
+      // Only allow in development
+      if (process.env.NODE_ENV === 'production') {
+        return res.status(403).json({
+          success: false,
+          message: 'Test endpoint disabled in production'
+        });
+      }
+
+      const userId = req.user.id;
+      const { weight } = req.body;
+
+      // Get user's settings
+      const settings = await UserSettings.findOne({
+        where: { userId },
+        include: [{
+          model: require('../models').User,
+          as: 'user',
+          attributes: ['id', 'email', 'telegramChatId']
+        }]
+      });
+
+      if (!settings) {
+        return res.status(404).json({
+          success: false,
+          message: 'Settings tidak ditemukan'
+        });
+      }
+
+      // Create fake stock data
+      const fakeProducts = [
+        { title: weight || '1 Gram Emas Antam', price: 'Rp 1.500.000', hasStock: true },
+        { title: '5 Gram Emas Antam', price: 'Rp 7.200.000', hasStock: true },
+        { title: '10 Gram Emas Antam', price: 'Rp 14.300.000', hasStock: true }
+      ];
+
+      const fakeStockData = {
+        hasStock: true,
+        availableProducts: fakeProducts,
+        totalProducts: fakeProducts.length,
+        timestamp: new Date().toISOString()
+      };
+
+      // Reset notification history first (to ensure notification is sent)
+      await settings.update({ lastNotifiedStock: [] });
+
+      // Trigger notification
+      const result = await NotificationService.handleStockUpdate(
+        settings.locationId,
+        settings.locationName,
+        fakeStockData
+      );
+
+      res.json({
+        success: true,
+        message: 'Test notification triggered',
+        data: {
+          locationId: settings.locationId,
+          locationName: settings.locationName,
+          telegramConfigured: !!settings.user?.telegramChatId,
+          notified: result.notified,
+          fakeProducts: fakeProducts.map(p => p.title)
+        }
+      });
+
+    } catch (error) {
+      console.error('[Stock] Test notify error:', error.message);
+      next(error);
+    }
+  }
 }
 
 module.exports = StockController;

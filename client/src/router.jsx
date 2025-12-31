@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Settings from './pages/Settings';
+import Profile from './pages/Profile';
 
 // Check authentication from localStorage
 function isAuthenticated() {
@@ -55,9 +56,19 @@ const router = createBrowserRouter([
       {
         path: '/settings',
         element: <Settings />
+      },
+      {
+        path: '/profile',
+        element: <Profile />
       }
     ]
   }
-]);
+], {
+  future: {
+    v7_startTransition: true,
+    v7_relativeSplatPath: true
+  }
+});
 
 export default router;
+

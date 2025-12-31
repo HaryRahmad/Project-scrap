@@ -29,6 +29,11 @@ module.exports = (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: true,
       field: 'telegram_chat_id'
+    },
+    telegramUsername: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      field: 'telegram_username'
     }
   }, {
     sequelize,

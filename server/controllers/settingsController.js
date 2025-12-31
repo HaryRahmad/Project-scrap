@@ -1,4 +1,7 @@
 const { User, UserSettings } = require('../models');
+const axios = require('axios');
+
+const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
 
 class SettingsController {
   static async getSettings(req, res, next) {
@@ -16,9 +19,18 @@ class SettingsController {
         });
       }
 
+      // Get user's telegram info
+      const user = await User.findByPk(userId, {
+        attributes: ['telegramChatId', 'telegramUsername']
+      });
+
       res.json({
         success: true,
-        data: settings
+        data: {
+          ...settings.toJSON(),
+          telegramChatId: user?.telegramChatId,
+          telegramUsername: user?.telegramUsername
+        }
       });
 
     } catch (error) {
@@ -29,7 +41,7 @@ class SettingsController {
   static async updateSettings(req, res, next) {
     try {
       const userId = req.user.id;
-      const { locationId, locationName, targetWeights, isActive, telegramChatId } = req.body;
+      const { locationId, locationName, targetWeights, isActive, telegramUsername } = req.body;
 
       // Find or create settings
       let settings = await UserSettings.findOne({ where: { userId } });
@@ -53,12 +65,22 @@ class SettingsController {
         });
       }
 
-      // Update telegram chat ID in user table if provided
-      if (telegramChatId !== undefined) {
+      // If telegramUsername provided, try to resolve Chat ID
+      if (telegramUsername !== undefined) {
+        const username = telegramUsername.replace('@', '').toLowerCase();
         await User.update(
-          { telegramChatId },
+          { telegramUsername: username },
           { where: { id: userId } }
         );
+
+        // Try to resolve Chat ID from username
+        const chatId = await SettingsController.resolveTelegramChatId(username);
+        if (chatId) {
+          await User.update(
+            { telegramChatId: chatId },
+            { where: { id: userId } }
+          );
+        }
       }
 
       res.json({
@@ -71,6 +93,96 @@ class SettingsController {
       next(error);
     }
   }
+
+  /**
+   * Resolve Telegram username to Chat ID using getUpdates
+   */
+  static async resolveTelegramChatId(username) {
+    if (!TELEGRAM_BOT_TOKEN || !username) return null;
+
+    try {
+      const response = await axios.get(
+        `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`
+      );
+
+      if (response.data.ok && response.data.result) {
+        // Find the user by username in recent updates
+        for (const update of response.data.result) {
+          const from = update.message?.from;
+          if (from && from.username?.toLowerCase() === username.toLowerCase()) {
+            console.log(`[Telegram] Resolved @${username} -> ${from.id}`);
+            return from.id.toString();
+          }
+        }
+      }
+      return null;
+    } catch (error) {
+      console.error('[Telegram] Error resolving username:', error.message);
+      return null;
+    }
+  }
+
+  /**
+   * Link Telegram account - user enters username, system resolves Chat ID
+   * POST /api/settings/link-telegram
+   */
+  static async linkTelegram(req, res, next) {
+    try {
+      const userId = req.user.id;
+      const { username } = req.body;
+
+      if (!username) {
+        return res.status(400).json({
+          success: false,
+          message: 'Username Telegram diperlukan'
+        });
+      }
+
+      const cleanUsername = username.replace('@', '').toLowerCase();
+
+      // Save username
+      await User.update(
+        { telegramUsername: cleanUsername },
+        { where: { id: userId } }
+      );
+
+      // Try to resolve Chat ID
+      const chatId = await SettingsController.resolveTelegramChatId(cleanUsername);
+
+      if (chatId) {
+        await User.update(
+          { telegramChatId: chatId },
+          { where: { id: userId } }
+        );
+
+        return res.json({
+          success: true,
+          message: 'Telegram berhasil terhubung!',
+          data: {
+            username: cleanUsername,
+            chatId: chatId,
+            linked: true
+          }
+        });
+      }
+
+      // Username saved but Chat ID not found yet
+      res.json({
+        success: true,
+        message: 'Username disimpan. Silakan kirim /start ke bot Telegram, lalu coba lagi.',
+        data: {
+          username: cleanUsername,
+          chatId: null,
+          linked: false,
+          instruction: 'Kirim /start ke bot Telegram Anda, lalu klik "Link Telegram" lagi'
+        }
+      });
+
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = SettingsController;
+

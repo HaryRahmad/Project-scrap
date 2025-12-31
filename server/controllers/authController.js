@@ -5,7 +5,7 @@ const { generateToken } = require('../helpers/jwt');
 class AuthController {
   static async register(req, res, next) {
     try {
-      const { email, password, telegramChatId } = req.body;
+      const { email, password, telegramUsername } = req.body;
 
       // Validate input
       if (!email || !password) {
@@ -28,11 +28,14 @@ class AuthController {
       // Hash password
       const hashedPassword = hashPassword(password);
 
+      // Clean username (remove @ if present)
+      const cleanUsername = telegramUsername ? telegramUsername.replace('@', '').toLowerCase() : null;
+
       // Create user
       const user = await User.create({
         email,
         password: hashedPassword,
-        telegramChatId: telegramChatId || null
+        telegramUsername: cleanUsername
       });
 
       // Create default settings (inactive - user must setup first)
@@ -112,7 +115,7 @@ class AuthController {
   static async getMe(req, res, next) {
     try {
       const user = await User.findByPk(req.user.id, {
-        attributes: ['id', 'email', 'telegramChatId', 'createdAt'],
+        attributes: ['id', 'email', 'telegramChatId', 'telegramUsername', 'createdAt'],
         include: [{
           model: UserSettings,
           as: 'settings'

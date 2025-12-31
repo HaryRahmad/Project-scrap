@@ -9,6 +9,7 @@ const AuthController = require('../controllers/authController');
 const SettingsController = require('../controllers/settingsController');
 const StockController = require('../controllers/stockController');
 const MasterController = require('../controllers/masterController');
+const ProfileController = require('../controllers/profileController');
 
 // Middleware
 const auth = require('../middleware/authen');
@@ -21,10 +22,18 @@ router.post('/auth/login', AuthController.login);
 router.get('/auth/me', auth, AuthController.getMe);
 
 // ============================================
+// PROFILE ROUTES (/api/profile)
+// ============================================
+router.get('/profile', auth, ProfileController.getProfile);
+router.put('/profile', auth, ProfileController.updateProfile);
+router.put('/profile/password', auth, ProfileController.changePassword);
+
+// ============================================
 // SETTINGS ROUTES (/api/settings)
 // ============================================
 router.get('/settings', auth, SettingsController.getSettings);
 router.put('/settings', auth, SettingsController.updateSettings);
+router.post('/settings/link-telegram', auth, SettingsController.linkTelegram);
 
 // ============================================
 // STOCK ROUTES (/api/stock)
@@ -33,6 +42,7 @@ router.get('/stock', auth, StockController.getStock);
 router.get('/stock/all', StockController.getAllStock);
 router.post('/stock/update', StockController.handleStockUpdate);
 router.post('/stock/blocked', StockController.handleBlocked);
+router.post('/stock/test-notify', auth, StockController.testNotify); // TEST: Simulate stock found
 
 // ============================================
 // MASTER DATA ROUTES (/api/master)

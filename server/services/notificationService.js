@@ -64,13 +64,37 @@ ${productList}
   }
 
   /**
+   * Reset lastNotifiedStock for all users monitoring a location
+   * Called when stock becomes unavailable so users get notified again when stock returns
+   */
+  static async resetNotificationHistory(locationId, locationName) {
+    try {
+      const result = await UserSettings.update(
+        { lastNotifiedStock: [] },
+        { where: { locationId, isActive: true } }
+      );
+      
+      if (result[0] > 0) {
+        console.log(`[Notification] 🔄 Reset notification history for ${result[0]} users at ${locationName}`);
+      }
+      
+      return result[0];
+    } catch (error) {
+      console.error('[Notification] Reset error:', error.message);
+      return 0;
+    }
+  }
+
+  /**
    * Handle stock update from Checker
    * Match users and send notifications
    */
   static async handleStockUpdate(locationId, locationName, stockData) {
+    // If no stock available, reset notification history so users get notified when stock returns
     if (!stockData.hasStock || !stockData.availableProducts?.length) {
-      console.log(`[Notification] No stock at ${locationName}, skipping notifications`);
-      return { notified: 0 };
+      console.log(`[Notification] No stock at ${locationName}, resetting notification history`);
+      await this.resetNotificationHistory(locationId, locationName);
+      return { notified: 0, reset: true };
     }
 
     try {
