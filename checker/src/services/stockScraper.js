@@ -14,14 +14,14 @@ const config = {
   chromiumArgs: [
     '--no-sandbox',
     '--disable-dev-shm-usage',
+    '--single-process',
+    '--no-zygote',
     '--disable-gpu',
     '--disable-software-rasterizer',
     '--disable-extensions',
     '--disable-background-networking',
     '--mute-audio',
-    '--no-first-run',
-    '--disable-setuid-sandbox',
-    '--disable-accelerated-2d-canvas'
+    '--no-first-run'
   ],
   allowedResourceTypes: ['document', 'script', 'xhr', 'fetch'],
   userAgents: [
@@ -37,21 +37,14 @@ class StockScraper {
   static async setupBrowser() {
     console.log('[Scraper] 🚀 Launching browser...');
     
-    try {
-      const browser = await puppeteer.launch({
-        headless: true,
-        args: config.chromiumArgs,
-        defaultViewport: { width: 1366, height: 768 },
-        protocolTimeout: 60000,
-        timeout: 60000
-      });
-      
-      console.log('[Scraper] ✅ Browser launched');
-      return browser;
-    } catch (error) {
-      console.error('[Scraper] ❌ Failed to launch browser:', error.message);
-      throw error;
-    }
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: config.chromiumArgs,
+      defaultViewport: { width: 1366, height: 768 }
+    });
+    
+    console.log('[Scraper] ✅ Browser launched');
+    return browser;
   }
 
   /**

@@ -7,12 +7,19 @@ const axios = require('axios');
 const { User, UserSettings } = require('../models');
 
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+// Set to false to enable Telegram notifications
+const DISABLE_TELEGRAM = false;
 
 class NotificationService {
   /**
    * Send message to Telegram
    */
   static async sendTelegram(chatId, message) {
+    if (DISABLE_TELEGRAM) {
+      console.log('[Notification] 🔇 Telegram DISABLED');
+      return true;
+    }
+    
     if (!TELEGRAM_BOT_TOKEN || !chatId) {
       console.log('[Notification] ⚠️ Telegram not configured or chatId missing');
       return false;

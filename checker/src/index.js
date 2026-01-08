@@ -36,7 +36,7 @@ const config = {
   schedule: {
     workDays: [1, 2, 3, 4, 5], // Monday - Friday
     startHour: 8,
-    endHour: 20  // 8 PM
+    endHour: 17
   }
 };
 

@@ -1,0 +1,51 @@
+{
+  "location": "bandung",
+  "cookies": [
+    {
+      "name": "_ga_8XC1TTYW3C",
+      "value": "GS2.1.s1767827313$o2$g1$t1767827328$j45$l0$h0",
+      "domain": ".logammulia.com"
+    },
+    {
+      "name": "XSRF-TOKEN",
+      "value": "eyJpdiI6IllVNkNIRkYrcjJFRHBQbkJCVVdYM0E9PSIsInZhbHVlIjoiK0Vkc2FWVUpEZVhBUUZGaHJqT1BtUkk3TFhsM1pwbXU3bmlTUnBsdk9vbkF1XC96c0x4Zmo3ajdla1k1TEVRMldITVlCZ2ZUakZuYTN1cU91dDRmdlV3PT0iLCJtYWMiOiI4MGNiOWU1ODVlMGE3ZjQzMjI1NTE5NDBhODQ0ZTEzNTNhNzUyOGRiYThjOWZkZGVmZDc5ZjkzOGU4NDdmYjgzIn0%3D",
+      "domain": ".logammulia.com"
+    },
+    {
+      "name": "_gcl_au",
+      "value": "1.1.447974918.1767516258.1312588803.1767827325.1767827325",
+      "domain": ".logammulia.com"
+    },
+    {
+      "name": "cf_clearance",
+      "value": "HGzORaIhmbprjJYiBrUWe3FENG5GD5XEqUESi6QEuLo-1767827315-1.2.1.1-BY65uiiMUj5cz6x6Bz8VyK2RY9CIVfADDWkTdSxB5ipjBm3mCZTjJoUtoGduCrFjgAOB2Ki5i3GPQH7fDTRgye5aefzee92tKao5gazKmIDfiRuclkPdq8QFp38YC59ty2kkPOMtNjGVhxLVfMP2AQX73U0lo0PK0UVgYS0vuOI_8Tmy69pnKAZSHaUDITukHcgOWGbBhaRDqnEE.pkAQFn95sX8BUi_wEbWrOc4ui4",
+      "domain": ".logammulia.com"
+    },
+    {
+      "name": "cf_clearance",
+      "value": "FyUtYuAynkfjympGeFh0p03Z0fU4S0d2ugLc.UNbq4w-1767516311-1.2.1.1-wSA92yOZsl3eESH7wxAh9bAsOsQigzpE6mWICcoGZrlGEeYlmfInGmaIkagDdoza6s3je3horYwUE4kIk3QmkrjU4.C46FhMUL_En12LGanXPjtljpLzIsPS9WMcM_7bbhYg8ZmETv.tNMUMw0tNTlCkX8GMEThobYHBbfFytoTdxLB0vTsABElXNTddonCaZmJvs9zMIf0j8ZKavj9CF9FoR6hoNCaXqAkCwHPqAqM",
+      "domain": ".logammulia.com"
+    },
+    {
+      "name": "geoloc_storage_id",
+      "value": "BDH01",
+      "domain": ".logammulia.com"
+    },
+    {
+      "name": "_ga",
+      "value": "GA1.1.1790734906.1767516258",
+      "domain": ".logammulia.com"
+    },
+    {
+      "name": "logammulia_session",
+      "value": "KeaqcZXKUKHmOTE27CA2Xt0SIaOnijJ20vZcvKZk",
+      "domain": ".logammulia.com"
+    },
+    {
+      "name": "geoloc_city_name",
+      "value": "Bandung",
+      "domain": ".logammulia.com"
+    }
+  ],
+  "saved_at": "2026-01-08T06:08:51.126315"
+}
