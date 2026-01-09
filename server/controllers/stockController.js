@@ -1,4 +1,4 @@
-const { UserSettings, StockCache } = require('../models');
+const { UserSettings, StockCache, Boutique } = require('../models');
 const NotificationService = require('../services/notificationService');
 
 class StockController {
@@ -252,6 +252,60 @@ class StockController {
 
     } catch (error) {
       console.error('[Stock] Test notify error:', error.message);
+      next(error);
+    }
+  }
+
+  /**
+   * Get unique locations to check - untuk Python scheduler
+   * Returns active locations dari user settings yang isActive = true
+   * Mapping dari database boutiques table
+   */
+  static async getCheckerLocations(req, res, next) {
+    try {
+      // Get semua unique locationId dari active user settings
+      const activeSettings = await UserSettings.findAll({
+        where: { isActive: true },
+        attributes: ['locationId'],
+        group: ['locationId']
+      });
+
+      if (activeSettings.length === 0) {
+        console.log('[Checker] No active settings found');
+        return res.json({
+          success: true,
+          locations: [],
+          count: 0
+        });
+      }
+
+      // Get location IDs
+      const locationIds = activeSettings.map(s => s.locationId);
+
+      // Query boutiques dari database untuk get city names
+      const boutiques = await Boutique.findAll({
+        where: { locationId: locationIds },
+        attributes: ['locationId', 'city']
+      });
+
+      // Convert city names to lowercase keys for scraper
+      const locations = boutiques
+        .map(b => b.city.toLowerCase().replace(/\s+/g, ''))
+        .filter(loc => loc);
+
+      // Remove duplicates
+      const uniqueLocations = [...new Set(locations)];
+
+      console.log(`[Checker] Returning ${uniqueLocations.length} locations:`, uniqueLocations);
+
+      res.json({
+        success: true,
+        locations: uniqueLocations,
+        count: uniqueLocations.length
+      });
+
+    } catch (error) {
+      console.error('[Checker] Error fetching locations:', error.message);
       next(error);
     }
   }

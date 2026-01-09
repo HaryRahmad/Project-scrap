@@ -50,5 +50,10 @@ router.post('/stock/test-notify', auth, StockController.testNotify); // TEST: Si
 router.get('/master/boutiques', MasterController.getBoutiques);
 router.get('/master/weights', MasterController.getWeights);
 
+// ============================================
+// CHECKER ROUTES (/api/checker) - For Python scheduler
+// ============================================
+router.get('/checker/locations', StockController.getCheckerLocations);
+
 module.exports = router;
 
