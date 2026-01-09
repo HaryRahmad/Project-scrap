@@ -125,40 +125,8 @@ def scrape(location="bandung"):
         page.set.window.size(1280, 720)
         page.set.load_mode.eager()
         
-        # Block ALL resources untuk change-location dan gold page
-        log("Blocking all resources...")
-        try:
-            page.set.blocked_urls([
-                # CSS
-                '*.css', '*.less', '*.scss', '*.sass',
-                # Images
-                '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico', '*.bmp', '*.tiff',
-                # Fonts
-                '*.woff', '*.woff2', '*.ttf', '*.eot', '*.otf',
-                # Media
-                '*.mp4', '*.webm', '*.mp3', '*.wav', '*.ogg', '*.avi', '*.mov',
-                # Documents
-                '*.pdf', '*.doc', '*.docx', '*.xls', '*.xlsx',
-                # Analytics & Tracking
-                '*google-analytics*', '*googletagmanager*', '*gtag*',
-                '*facebook*', '*fb.com*', '*fbcdn*',
-                '*hotjar*', '*clarity*', '*doubleclick*',
-                '*adsense*', '*adservice*', '*googlesyndication*',
-                '*twitter*', '*linkedin*', '*pinterest*', '*instagram*',
-                '*tiktok*', '*snapchat*',
-                # Third-party services
-                '*recaptcha*', '*gstatic*', '*googleapis.com/recaptcha*',
-                '*youtube*', '*vimeo*', '*dailymotion*',
-                '*cloudflare-insights*', '*cloudflareinsights*',
-                '*newrelic*', '*segment*', '*mixpanel*', '*amplitude*',
-                '*intercom*', '*zendesk*', '*freshdesk*', '*drift*', '*crisp*',
-                '*livechat*', '*tawk*', '*olark*',
-                # CDN resources (non-essential)
-                '*cdn.jsdelivr*', '*cdnjs*', '*unpkg*',
-                # Maps
-                '*maps.google*', '*maps.gstatic*'
-            ])
-        except: pass
+        # NOTE: Do NOT block resources for change-location page
+        # It needs CSS/JS to work properly
         
         # Go to change-location
         log("Loading change-location...")
@@ -189,16 +157,21 @@ def scrape(location="bandung"):
             selectAndSubmit();
         ''')
         
-        # ADD CSS blocking untuk gold page (meringankan load)
-        log("Blocking CSS for gold page...")
+        # Wait for navigation after form submit
+        # The form redirects to gold page, so wait for that
+        time.sleep(2)
+        
+        # Now we should be on gold page already via redirect
+        # Block resources for faster parsing
+        log("Blocking resources for gold page...")
         css_blocked = True
         try:
             page.set.blocked_urls([
-                '*.css', '*.less', '*.scss',  # CSS
-                '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico', '*.bmp',
-                '*.woff', '*.woff2', '*.ttf', '*.eot', '*.otf',
+                '*.css', '*.less', '*.scss',
+                '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico',
+                '*.woff', '*.woff2', '*.ttf', '*.eot',
                 '*google-analytics*', '*googletagmanager*', '*facebook*',
-                '*hotjar*', '*clarity*', '*doubleclick*'
+                '*hotjar*', '*clarity*'
             ])
         except: 
             css_blocked = False
@@ -229,17 +202,23 @@ def scrape(location="bandung"):
         if len(products) < 5 and css_blocked:
             log("⚠️ CSS blocking gagal, retry tanpa blocking...")
             try:
-                # Clear blocked URLs
-                page.set.blocked_urls([
-                    '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico',
-                    '*.woff', '*.woff2', '*.ttf', '*.eot',
-                    '*google-analytics*', '*googletagmanager*', '*facebook*'
-                ])
+                # COMPLETELY clear blocked URLs
+                page.set.blocked_urls([])
             except: pass
             
-            # Reload page
-            page.get(GOLD_URL)
-            time.sleep(2)
+            # Hard reload with cache bypass
+            try:
+                page.refresh(ignore_cache=True)
+            except:
+                page.get(GOLD_URL)
+            
+            time.sleep(3)  # Longer wait for full page
+            
+            # Wait for product container explicitly
+            try:
+                page.ele('css:.ct-body', timeout=10)
+            except: pass
+            
             products = parse_products(page.html)
         
         available = [p for p in products if p.get('hasStock')]
