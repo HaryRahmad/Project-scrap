@@ -18,25 +18,49 @@ GOLD_URL = "https://www.logammulia.com/id/purchase/gold"
 ELEMENT_TIMEOUT = 10  # Timeout untuk wait element (naik dari 5)
 MAX_RETRIES = 3       # Max retry jika 0 products
 
-LOCATION_MAP = {
+# Map locationId (storage_id) to display name
+# Now indexed by locationId directly (not city name)
+LOCATION_ID_MAP = {
     # Jakarta & Sekitarnya
+    "200": "Jakarta - Pulo Gadung",
+    "203": "Jakarta - TB Simatupang",
+    "205": "Jakarta - Setiabudi One",
+    "214": "Jakarta - Puri Indah",
+    "215": "Bekasi",
+    "216": "Tangerang",
+    "217": "Tangerang Selatan",
+    "218": "Bogor",
+    
+    # Jawa Barat
+    "201": "Bandung",
+    
+    # Jawa Tengah
+    "212": "Semarang",
+    "213": "Yogyakarta",
+    
+    # Jawa Timur
+    "202": "Surabaya - Darmo",
+    "220": "Surabaya - Pakuwon",
+    
+    # Luar Jawa
+    "206": "Medan",
+    "207": "Makassar",
+    "208": "Palembang",
+    "209": "Bali",
+    "210": "Balikpapan",
+}
+
+# Legacy mapping for backward compatibility (city name -> storage_id)
+LOCATION_MAP = {
     "jakarta": ("200", "Jakarta"),
     "bekasi": ("215", "Bekasi"),
     "tangerang": ("216", "Tangerang"),
     "tangerangselatan": ("217", "Tangerang Selatan"),
     "bogor": ("218", "Bogor"),
-    
-    # Jawa Barat
     "bandung": ("201", "Bandung"),
-    
-    # Jawa Tengah
     "semarang": ("212", "Semarang"),
     "yogyakarta": ("213", "Yogyakarta"),
-    
-    # Jawa Timur
     "surabaya": ("202", "Surabaya"),
-    
-    # Luar Jawa
     "bali": ("209", "Bali"),
     "medan": ("206", "Medan"),
     "palembang": ("208", "Palembang"),
@@ -250,7 +274,8 @@ def scrape(location="bandung"):
 def scrape_multiple(locations):
     """
     Scrape multiple locations dalam satu browser session
-    Lebih efisien karena browser hanya dibuka sekali
+    OPTIMIZED: Hanya ke /change-location sekali, setelah itu gunakan 
+    tombol "Ubah Lokasi" di gold page untuk perpindahan lebih cepat
     """
     start_total = time.time()
     results = []
@@ -288,101 +313,115 @@ def scrape_multiple(locations):
         opts.auto_port()
         
         page = ChromiumPage(opts)
-        page.set.window.size(1280, 720)
+        # Small window size to reduce RAM usage (browser is hidden anyway)
+        page.set.window.size(800, 600)
         page.set.load_mode.eager()
         
-        # Block resources
-        try:
-            page.set.blocked_urls([
-                '*.css', '*.less', '*.scss', '*.sass',
-                '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico', '*.bmp',
-                '*.woff', '*.woff2', '*.ttf', '*.eot', '*.otf',
-                '*.mp4', '*.webm', '*.mp3', '*.wav',
-                '*google-analytics*', '*googletagmanager*', '*facebook*',
-                '*hotjar*', '*clarity*', '*doubleclick*'
-            ])
-        except: pass
+        # Block heavy resources for faster loading (except for change-location page)
+        # Note: Don't block CSS on change-location as it needs JS/CSS to work
+        # We'll set this after first location is done
         
-        # First location: setup via change-location page
-        first_location = locations[0]
-        if first_location not in LOCATION_MAP:
-            first_location = "bandung"
-        
-        storage_id, city_name = LOCATION_MAP[first_location]
-        log(f"\n--- {first_location.upper()} (setup) ---")
-        
-        # Go to change-location for first setup
-        log("Loading change-location...")
-        page.get(LOCATION_URL)
-        
-        log("Selecting + Submitting...")
-        page.run_js(f'''
-            function selectAndSubmit() {{
-                var select = document.querySelector('select');
-                if (select) {{
-                    for (var i = 0; i < select.options.length; i++) {{
-                        if (select.options[i].text.toLowerCase().includes('{city_name.lower()}')) {{
-                            select.selectedIndex = i;
-                            select.dispatchEvent(new Event('change'));
-                            break;
-                        }}
-                    }}
-                    var btn = document.querySelector('.btn-primary');
-                    if (btn) btn.click();
-                }} else {{
-                    setTimeout(selectAndSubmit, 100);
-                }}
-            }}
-            selectAndSubmit();
-        ''')
-        time.sleep(0.5)
-        
-        # Load gold page
-        log("Loading gold page...")
-        page.get(GOLD_URL)
-        
-        # Loop through each location
+        # Loop through each location (locationId like "200", "201")
         for idx, location in enumerate(locations):
             start_loc = time.time()
             
-            if location not in LOCATION_MAP:
+            # Location can be locationId (like "200") or city name (like "jakarta")
+            location_str = str(location)
+            
+            # Try locationId lookup first, then city name
+            if location_str in LOCATION_ID_MAP:
+                storage_id = location_str
+                display_name = LOCATION_ID_MAP[location_str]
+            elif location_str.lower() in LOCATION_MAP:
+                storage_id, display_name = LOCATION_MAP[location_str.lower()]
+            else:
                 log(f"⚠️ Unknown location: {location}, skipping")
                 continue
             
-            storage_id, city_name = LOCATION_MAP[location]
-            log(f"\n--- {location.upper()} ---")
+            log(f"\n--- {display_name} [{storage_id}] ({idx + 1}/{len(locations)}) ---")
             
             try:
-                # Go to change-location
-                log("Loading change-location...")
-                page.get(LOCATION_URL)
-                
-                # Select + Submit
-                log("Selecting + Submitting...")
-                page.run_js(f'''
-                    function selectAndSubmit() {{
-                        var select = document.querySelector('select');
-                        if (select) {{
-                            for (var i = 0; i < select.options.length; i++) {{
-                                if (select.options[i].text.toLowerCase().includes('{city_name.lower()}')) {{
-                                    select.selectedIndex = i;
-                                    select.dispatchEvent(new Event('change'));
-                                    break;
+                if idx == 0:
+                    # FIRST LOCATION: Use /change-location page
+                    log("Loading change-location (first location)...")
+                    page.get(LOCATION_URL)
+                    
+                    # Select dropdown by TEXT matching (using display_name)
+                    # Extract first word of display_name for matching (e.g., "Bandung" from "Bandung")
+                    search_text = display_name.split(' - ')[0].split()[0].lower()
+                    log(f"Selecting '{search_text}'...")
+                    page.run_js(f'''
+                        function selectAndSubmit() {{
+                            var select = document.querySelector('select');
+                            if (select) {{
+                                for (var i = 0; i < select.options.length; i++) {{
+                                    if (select.options[i].text.toLowerCase().includes('{search_text}')) {{
+                                        select.selectedIndex = i;
+                                        select.dispatchEvent(new Event('change'));
+                                        break;
+                                    }}
                                 }}
+                                var btn = document.querySelector('.btn-primary');
+                                if (btn) btn.click();
+                            }} else {{
+                                setTimeout(selectAndSubmit, 100);
                             }}
-                            var btn = document.querySelector('.btn-primary');
-                            if (btn) btn.click();
-                        }} else {{
-                            setTimeout(selectAndSubmit, 100);
                         }}
-                    }}
-                    selectAndSubmit();
-                ''')
-                time.sleep(0.5)
-                
-                # Load gold page
-                log("Loading gold page...")
-                page.get(GOLD_URL)
+                        selectAndSubmit();
+                    ''')
+                    time.sleep(1)
+                    
+                    # Block resources BEFORE loading gold page
+                    # Block CSS too for faster loading
+                    log("Blocking CSS/images/fonts for speed...")
+                    try:
+                        page.set.blocked_urls([
+                            # Block CSS, images, fonts, analytics
+                            '*.css', '*.less', '*.scss', '*.sass',
+                            '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico', '*.bmp',
+                            '*.woff', '*.woff2', '*.ttf', '*.eot', '*.otf',
+                            '*.mp4', '*.webm', '*.mp3', '*.wav',
+                            '*google-analytics*', '*googletagmanager*', '*facebook*',
+                            '*hotjar*', '*clarity*', '*doubleclick*'
+                        ])
+                    except: pass
+                    
+                    # Load gold page (now without CSS/images)
+                    log("Loading gold page...")
+                    page.get(GOLD_URL)
+                else:
+                    # SUBSEQUENT LOCATIONS: Go directly to change-location page
+                    # (Simpler and more reliable than trying in-page modal)
+                    log("Loading change-location...")
+                    page.get(LOCATION_URL)
+                    
+                    # Select location by text matching
+                    search_text = display_name.split(' - ')[0].split()[0].lower()
+                    log(f"Selecting '{search_text}'...")
+                    page.run_js(f'''
+                        function selectAndSubmit() {{
+                            var select = document.querySelector('select');
+                            if (select) {{
+                                for (var i = 0; i < select.options.length; i++) {{
+                                    if (select.options[i].text.toLowerCase().includes('{search_text}')) {{
+                                        select.selectedIndex = i;
+                                        select.dispatchEvent(new Event('change'));
+                                        break;
+                                    }}
+                                }}
+                                var btn = document.querySelector('.btn-primary');
+                                if (btn) btn.click();
+                            }} else {{
+                                setTimeout(selectAndSubmit, 100);
+                            }}
+                        }}
+                        selectAndSubmit();
+                    ''')
+                    time.sleep(1)
+                    
+                    # Load gold page
+                    log("Loading gold page...")
+                    page.get(GOLD_URL)
                 
                 # Wait for products container
                 try:

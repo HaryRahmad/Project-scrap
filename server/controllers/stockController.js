@@ -255,19 +255,16 @@ class StockController {
       next(error);
     }
   }
-
   /**
    * Get unique locations to check - untuk Python scheduler
-   * Returns active locations dari user settings yang isActive = true
-   * Mapping dari database boutiques table
+   * Returns locationIds directly for per-boutique checking
    */
   static async getCheckerLocations(req, res, next) {
     try {
-      // Get semua unique locationId dari active user settings
+      // Get all active settings with locationIds
       const activeSettings = await UserSettings.findAll({
         where: { isActive: true },
-        attributes: ['locationId'],
-        group: ['locationId']
+        attributes: ['locationIds']
       });
 
       if (activeSettings.length === 0) {
@@ -279,29 +276,31 @@ class StockController {
         });
       }
 
-      // Get location IDs
-      const locationIds = activeSettings.map(s => s.locationId);
+      // Collect all unique location IDs from all users
+      const allLocationIds = new Set();
+      for (const setting of activeSettings) {
+        const ids = setting.locationIds || [];
+        ids.forEach(id => allLocationIds.add(id));
+      }
 
-      // Query boutiques dari database untuk get city names
-      const boutiques = await Boutique.findAll({
-        where: { locationId: locationIds },
-        attributes: ['locationId', 'city']
-      });
+      if (allLocationIds.size === 0) {
+        console.log('[Checker] No locations found in user settings');
+        return res.json({
+          success: true,
+          locations: [],
+          count: 0
+        });
+      }
 
-      // Convert city names to lowercase keys for scraper
-      const locations = boutiques
-        .map(b => b.city.toLowerCase().replace(/\s+/g, ''))
-        .filter(loc => loc);
+      // Return locationIds directly (for per-boutique checking)
+      const uniqueLocationIds = [...allLocationIds];
 
-      // Remove duplicates
-      const uniqueLocations = [...new Set(locations)];
-
-      console.log(`[Checker] Returning ${uniqueLocations.length} locations:`, uniqueLocations);
+      console.log(`[Checker] Returning ${uniqueLocationIds.length} locationIds:`, uniqueLocationIds);
 
       res.json({
         success: true,
-        locations: uniqueLocations,
-        count: uniqueLocations.length
+        locations: uniqueLocationIds,
+        count: uniqueLocationIds.length
       });
 
     } catch (error) {

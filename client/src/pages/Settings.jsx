@@ -7,8 +7,7 @@ export default function Settings() {
   const [boutiques, setBoutiques] = useState([]);
   const [weightOptions, setWeightOptions] = useState([]);
   const [formData, setFormData] = useState({
-    locationId: '',
-    locationName: '',
+    locationIds: [],
     targetWeights: [],
     isActive: true
   });
@@ -38,8 +37,7 @@ export default function Settings() {
         const s = settingsRes.data.data;
         setSettings(s);
         setFormData({
-          locationId: s.locationId || '',
-          locationName: s.locationName || '',
+          locationIds: s.locationIds || (s.locationId ? [s.locationId] : []),
           targetWeights: s.targetWeights || [],
           isActive: s.isActive ?? true
         });
@@ -55,14 +53,24 @@ export default function Settings() {
     fetchData();
   }, []);
 
-  function handleLocationChange(e) {
-    const locationId = e.target.value;
-    const boutique = boutiques.find(b => b.locationId === locationId);
-    setFormData({
-      ...formData,
-      locationId,
-      locationName: boutique?.name || ''
-    });
+  function handleLocationToggle(locationId) {
+    const current = formData.locationIds || [];
+    let updated;
+    
+    if (current.includes(locationId)) {
+      // Remove location
+      updated = current.filter(id => id !== locationId);
+    } else {
+      // Add location (max 5)
+      if (current.length >= 5) {
+        setMessage({ type: 'error', text: 'Maksimal 5 lokasi yang dapat dipantau' });
+        setTimeout(() => setMessage({ type: '', text: '' }), 3000);
+        return;
+      }
+      updated = [...current, locationId];
+    }
+    
+    setFormData({ ...formData, locationIds: updated });
   }
 
   function handleWeightToggle(weight) {
@@ -146,23 +154,44 @@ export default function Settings() {
         {/* Location Card */}
         <div className="card bg-base-100 shadow-sm border border-base-200">
            <div className="card-body p-4 sm:p-6">
-            <h2 className="card-title text-base mb-4 flex items-center gap-2">
+            <h2 className="card-title text-base mb-2 flex items-center gap-2">
               <span className="text-xl">📍</span> Lokasi Butik
+              <span className="badge badge-primary badge-sm ml-auto">{formData.locationIds?.length || 0}/5</span>
             </h2>
-            <select
-              value={formData.locationId}
-              onChange={handleLocationChange}
-              className="select select-bordered w-full select-lg text-base"
-            >
-              <option value="">Pilih lokasi...</option>
-              {boutiques.map(boutique => (
-                <option key={boutique.locationId} value={boutique.locationId}>
-                  {boutique.city} - {boutique.name}
-                </option>
-              ))}
-            </select>
-            <div className="label">
-              <span className="label-text-alt text-base-content/60">Pilih lokasi Antam terdekat untuk dipantau</span>
+            <p className="text-sm text-base-content/60 mb-4">Pilih butik yang ingin dipantau (maks. 5)</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {boutiques.map(boutique => {
+                const isSelected = formData.locationIds?.includes(boutique.locationId);
+                return (
+                  <button
+                    key={boutique.locationId}
+                    type="button"
+                    onClick={() => handleLocationToggle(boutique.locationId)}
+                    className={`btn h-auto py-3 px-4 justify-start text-left border-opacity-20 ${
+                      isSelected
+                        ? 'btn-primary'
+                        : 'btn-ghost bg-base-200/50 hover:bg-base-200'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <input 
+                        type="checkbox" 
+                        checked={isSelected}
+                        readOnly
+                        className="checkbox checkbox-sm checkbox-primary"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className={`font-semibold truncate ${isSelected ? 'text-white' : ''}`}>
+                          {boutique.city}
+                        </div>
+                        <div className={`text-xs truncate ${isSelected ? 'text-white/70' : 'text-base-content/60'}`}>
+                          {boutique.name}
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>

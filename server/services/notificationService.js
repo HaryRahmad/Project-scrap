@@ -76,9 +76,16 @@ ${productList}
    */
   static async resetNotificationHistory(locationId, locationName) {
     try {
+      const { Op } = require('sequelize');
+      // Reset for users who have this locationId in their locationIds array
       const result = await UserSettings.update(
         { lastNotifiedStock: [] },
-        { where: { locationId, isActive: true } }
+        { 
+          where: { 
+            isActive: true,
+            locationIds: { [Op.contains]: [locationId] }
+          } 
+        }
       );
       
       if (result[0] > 0) {
@@ -105,9 +112,14 @@ ${productList}
     }
 
     try {
-      // Get all active users monitoring this location
+      const { Op } = require('sequelize');
+      
+      // Get all active users monitoring this location (locationId in their locationIds array)
       const userSettings = await UserSettings.findAll({
-        where: { locationId, isActive: true },
+        where: { 
+          isActive: true,
+          locationIds: { [Op.contains]: [locationId] }
+        },
         include: [{
           model: User,
           as: 'user',

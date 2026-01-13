@@ -33,6 +33,12 @@ module.exports = (sequelize, DataTypes) => {
       allowNull: false,
       field: 'location_name'
     },
+    locationIds: {
+      type: DataTypes.JSONB,
+      defaultValue: [],
+      allowNull: false,
+      field: 'location_ids'
+    },
     targetWeights: {
       type: DataTypes.JSONB,
       defaultValue: [],

@@ -38,7 +38,7 @@ CHECKER_SECRET = os.environ.get("CHECKER_SECRET", "")
 DEFAULT_LOCATIONS = ["bandung"]
 
 # Interval (dalam detik)
-BASE_INTERVAL = 120  # 2 menit
+BASE_INTERVAL = 100  # 100 detik (~1.5 menit)
 RANDOM_VARIATION = 30  # +/- 30 detik
 
 # Operating hours (jam operasi)
@@ -112,6 +112,16 @@ def run_scraper(location):
         log(f"❌ Error: {e}")
         return {"error": str(e)}
 
+def run_scraper_batch(locations):
+    """Run scraper for multiple locations in one browser session (faster)"""
+    try:
+        from scraper_ultrafast import scrape_multiple
+        results = scrape_multiple(locations)
+        return results
+    except Exception as e:
+        log(f"❌ Batch scrape error: {e}")
+        return [{"error": str(e)}]
+
 def send_to_server(location, location_id, stock_data):
     try:
         url = f"{SERVER_URL}/api/stock/update"
@@ -181,14 +191,39 @@ def main():
         
         if not locations:
             log("⚠️ No locations to check, skipping...")
-        else:
-            for location in locations:
-                result = run_scraper(location)
+        elif len(locations) == 1:
+            # Single location - use standard scraper
+            location = locations[0]
+            result = run_scraper(location)
+            
+            if result.get("error"):
+                log(f"❌ {location}: {result.get('error')}")
+            else:
+                total = result.get("totalProducts", 0)
+                available = len(result.get("availableProducts", []))
+                elapsed = result.get("elapsedSeconds", 0)
                 
+                log(f"📊 {location}: {available}/{total} ({elapsed}s)")
+                
+                location_id = result.get("locationId", "BDH01")
+                send_to_server(location, location_id, result)
+                
+                if available > 0:
+                    log(f"🔔 STOCK TERSEDIA:")
+                    for p in result.get("availableProducts", []):
+                        log(f"   - {p.get('title')}")
+        else:
+            # Multiple locations - use batch scraper (more efficient!)
+            log(f"🚀 Batch scraping {len(locations)} locations...")
+            results = run_scraper_batch(locations)
+            
+            for result in results:
                 if result.get("error"):
+                    location = result.get("location", "unknown")
                     log(f"❌ {location}: {result.get('error')}")
                     continue
                 
+                location = result.get("location", "unknown")
                 total = result.get("totalProducts", 0)
                 available = len(result.get("availableProducts", []))
                 elapsed = result.get("elapsedSeconds", 0)

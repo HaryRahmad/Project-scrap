@@ -41,7 +41,23 @@ class SettingsController {
   static async updateSettings(req, res, next) {
     try {
       const userId = req.user.id;
-      const { locationId, locationName, targetWeights, isActive, telegramUsername } = req.body;
+      const { locationId, locationName, locationIds, targetWeights, isActive, telegramUsername } = req.body;
+
+      // Validate locationIds if provided
+      let finalLocationIds = [];
+      if (locationIds && Array.isArray(locationIds)) {
+        // Max 5 locations
+        if (locationIds.length > 5) {
+          return res.status(400).json({
+            success: false,
+            message: 'Maksimal 5 lokasi yang dapat dipantau'
+          });
+        }
+        finalLocationIds = locationIds;
+      } else if (locationId) {
+        // Backward compatibility: single locationId
+        finalLocationIds = [locationId];
+      }
 
       // Find or create settings
       let settings = await UserSettings.findOne({ where: { userId } });
@@ -49,8 +65,9 @@ class SettingsController {
       if (settings) {
         // Update existing
         await settings.update({
-          locationId: locationId || settings.locationId,
+          locationId: locationId || finalLocationIds[0] || settings.locationId,
           locationName: locationName || settings.locationName,
+          locationIds: finalLocationIds.length > 0 ? finalLocationIds : settings.locationIds,
           targetWeights: targetWeights !== undefined ? targetWeights : settings.targetWeights,
           isActive: isActive !== undefined ? isActive : settings.isActive
         });
@@ -58,8 +75,9 @@ class SettingsController {
         // Create new (inactive by default)
         settings = await UserSettings.create({
           userId,
-          locationId: locationId || '200',
+          locationId: locationId || finalLocationIds[0] || '200',
           locationName: locationName || 'Butik Emas LM - Pulo Gadung (Kantor Pusat)',
+          locationIds: finalLocationIds,
           targetWeights: targetWeights || [],
           isActive: isActive !== undefined ? isActive : false
         });
