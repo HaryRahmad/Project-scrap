@@ -41,11 +41,39 @@ DEFAULT_LOCATIONS = ["bandung"]
 BASE_INTERVAL = 120  # 2 menit
 RANDOM_VARIATION = 30  # +/- 30 detik
 
+# Operating hours (jam operasi)
+OPERATING_START_HOUR = 8   # Jam 08:00
+OPERATING_END_HOUR = 20    # Jam 20:00 (8 malam)
+
 # =====================================================
 
 def log(msg):
     ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
-    print(f"[{ts}] {msg}")
+    try:
+        print(f"[{ts}] {msg}")
+    except UnicodeEncodeError:
+        # Fallback for Windows console encoding issues
+        safe_msg = msg.encode('ascii', 'replace').decode('ascii')
+        print(f"[{ts}] {safe_msg}")
+
+def is_within_operating_hours():
+    """Check if current time is within operating hours (08:00 - 20:00)"""
+    current_hour = datetime.now().hour
+    return OPERATING_START_HOUR <= current_hour < OPERATING_END_HOUR
+
+def get_next_operating_time():
+    """Calculate seconds until next operating window starts"""
+    now = datetime.now()
+    if now.hour < OPERATING_START_HOUR:
+        # Still before today's operating hours
+        next_start = now.replace(hour=OPERATING_START_HOUR, minute=0, second=0, microsecond=0)
+    else:
+        # Past today's operating hours, wait for tomorrow
+        from datetime import timedelta
+        tomorrow = now + timedelta(days=1)
+        next_start = tomorrow.replace(hour=OPERATING_START_HOUR, minute=0, second=0, microsecond=0)
+    
+    return int((next_start - now).total_seconds())
 
 def get_locations_from_server():
     """Fetch active locations dari server API"""
@@ -94,8 +122,10 @@ def send_to_server(location, location_id, stock_data):
             "stockData": {
                 "hasStock": stock_data.get("hasStock", False),
                 "availableProducts": stock_data.get("availableProducts", []),
+                "allProducts": stock_data.get("allProducts", []),  # Include all products
                 "totalProducts": stock_data.get("totalProducts", 0),
-                "timestamp": stock_data.get("timestamp")
+                "timestamp": stock_data.get("timestamp"),
+                "checkedCount": stock_data.get("totalProducts", 0)  # For client display
             }
         }
         
@@ -126,12 +156,23 @@ def main():
     log("=" * 50)
     log("Locations: Dynamic (from server)")
     log(f"Interval: {BASE_INTERVAL}s ± {RANDOM_VARIATION}s")
+    log(f"Operating Hours: {OPERATING_START_HOUR:02d}:00 - {OPERATING_END_HOUR:02d}:00")
     log(f"Server: {SERVER_URL}")
     log("=" * 50)
     
     run_count = 0
     
     while True:
+        # Check if within operating hours
+        if not is_within_operating_hours():
+            wait_seconds = get_next_operating_time()
+            wait_hours = wait_seconds // 3600
+            wait_minutes = (wait_seconds % 3600) // 60
+            log(f"💤 Di luar jam operasi ({OPERATING_START_HOUR:02d}:00 - {OPERATING_END_HOUR:02d}:00)")
+            log(f"⏳ Menunggu {wait_hours}j {wait_minutes}m sampai jam {OPERATING_START_HOUR:02d}:00...")
+            time.sleep(wait_seconds)
+            continue
+        
         run_count += 1
         log(f"\n--- Run #{run_count} ---")
         
