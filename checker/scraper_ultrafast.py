@@ -18,36 +18,31 @@ GOLD_URL = "https://www.logammulia.com/id/purchase/gold"
 ELEMENT_TIMEOUT = 10  # Timeout untuk wait element (naik dari 5)
 MAX_RETRIES = 3       # Max retry jika 0 products
 
-# Map locationId (storage_id) to display name
-# Now indexed by locationId directly (not city name)
 LOCATION_ID_MAP = {
-    # Jakarta & Sekitarnya
-    "200": "Jakarta - Pulo Gadung",
-    "203": "Jakarta - TB Simatupang",
-    "205": "Jakarta - Setiabudi One",
-    "214": "Jakarta - Puri Indah",
-    "215": "Bekasi",
-    "216": "Tangerang",
-    "217": "Tangerang Selatan",
-    "218": "Bogor",
-    
+    # Jakarta
+    "200": "BELM - Graha Dipta Pulo Gadung",
+    "203": "BELM - Gedung Antam",
+    "205": "BELM - Setiabudi One",
+    "214": "BELM - Puri Indah",
+    # Jabodetabek
+    "215": "BELM - Bekasi",
+    "216": "BELM - Tangerang",
+    "217": "BELM - Tangerang Selatan",
+    "218": "BELM - Bogor",
     # Jawa Barat
-    "201": "Bandung",
-    
+    "201": "BELM - Bandung",
     # Jawa Tengah
-    "212": "Semarang",
-    "213": "Yogyakarta",
-    
+    "212": "BELM - Semarang",
+    "213": "BELM - Yogyakarta",
     # Jawa Timur
-    "202": "Surabaya - Darmo",
-    "220": "Surabaya - Pakuwon",
-    
+    "202": "BELM - Surabaya Darmo",
+    "220": "BELM - Surabaya Pakuwon",
     # Luar Jawa
-    "206": "Medan",
-    "207": "Makassar",
-    "208": "Palembang",
-    "209": "Bali",
-    "210": "Balikpapan",
+    "206": "BELM - Medan",
+    "207": "BELM - Makassar",
+    "208": "BELM - Palembang",
+    "209": "BELM - Bali",
+    "210": "BELM - Balikpapan",
 }
 
 # Legacy mapping for backward compatibility (city name -> storage_id)

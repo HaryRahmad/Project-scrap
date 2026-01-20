@@ -17,7 +17,7 @@ from pathlib import Path
 
 # Load .env from server directory
 def load_env():
-    env_path = Path(__file__).parent.parent.parent / "server" / ".env"
+    env_path = Path(__file__).parent.parent / "server" / ".env"
     if env_path.exists():
         with open(env_path) as f:
             for line in f:
@@ -46,7 +46,6 @@ OPERATING_START_HOUR = 8   # Disabled for testing
 OPERATING_END_HOUR = 20    # Disabled for testing
 
 # =====================================================
-bi
 def log(msg):
     ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     try:

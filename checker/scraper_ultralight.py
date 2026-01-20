@@ -63,6 +63,15 @@ def log(msg):
     ts = datetime.now().strftime("%H:%M:%S")
     print(f"[{ts}] {msg}", file=sys.stderr)
 
+def kill_chrome():
+    """Kill any stuck chrome processes"""
+    try:
+        import subprocess
+        subprocess.run(['taskkill', '/F', '/IM', 'chrome.exe'], 
+                      capture_output=True, timeout=5)
+    except:
+        pass
+
 def force_gc():
     """Aggressive garbage collection"""
     gc.collect()
@@ -169,6 +178,7 @@ def scrape(location="bandung"):
         page = ChromiumPage(opts)
         page.set.window.size(800, 600)
         page.set.load_mode.eager()
+        page.set.timeouts(base=30, page_load=30, script=10)  # Set timeouts
         
         # Change location (don't block CSS here)
         log("Change loc...")
@@ -196,17 +206,20 @@ def scrape(location="bandung"):
         time.sleep(2)
         force_gc()
         
-        # Block resources for gold page
+        # Block ALL resources for gold page (CSS, images, fonts, analytics)
+        log("Block CSS...")
         try:
             page.set.blocked_urls([
-                '*.css', '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico',
-                '*.woff', '*.woff2', '*.ttf', '*.eot',
-                '*google-analytics*', '*googletagmanager*', '*facebook*', '*hotjar*'
+                '*.css', '*.less', '*.scss', '*.sass',
+                '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico', '*.bmp',
+                '*.woff', '*.woff2', '*.ttf', '*.eot', '*.otf',
+                '*google-analytics*', '*googletagmanager*', '*facebook*', '*hotjar*', '*clarity*'
             ])
         except:
             pass
         
         log("Load gold...")
+        # Force fresh load without cache
         page.get(GOLD_URL)
         
         try:
@@ -295,6 +308,7 @@ def scrape_multiple(locations):
                 page = ChromiumPage(opts)
                 page.set.window.size(800, 600)
                 page.set.load_mode.eager()
+                page.set.timeouts(base=30, page_load=30, script=10)  # Set timeouts
             
             start_loc = time.time()
             
@@ -336,14 +350,19 @@ def scrape_multiple(locations):
                 time.sleep(2)
                 force_gc()
                 
+                # Block ALL resources for gold page
+                log("Block CSS...")
                 try:
                     page.set.blocked_urls([
-                        '*.css', '*.png', '*.jpg', '*.gif', '*.webp', '*.svg', '*.ico',
-                        '*.woff', '*.woff2', '*google-analytics*', '*facebook*'
+                        '*.css', '*.less', '*.scss', '*.sass',
+                        '*.png', '*.jpg', '*.jpeg', '*.gif', '*.webp', '*.svg', '*.ico', '*.bmp',
+                        '*.woff', '*.woff2', '*.ttf', '*.eot', '*.otf',
+                        '*google-analytics*', '*googletagmanager*', '*facebook*', '*hotjar*', '*clarity*'
                     ])
                 except:
                     pass
                 
+                log("Load gold...")
                 page.get(GOLD_URL)
                 
                 try:
@@ -382,8 +401,44 @@ def scrape_multiple(locations):
                     "timestamp": datetime.now().isoformat()
                 })
                 
+            except TimeoutError as e:
+                log(f"⚠️ Timeout! Restarting browser...")
+                # Kill stuck browser and restart
+                if page:
+                    try:
+                        page.quit()
+                    except:
+                        pass
+                    del page
+                    page = None
+                kill_chrome()
+                force_gc()
+                time.sleep(2)
+                
+                results.append({
+                    "blocked": False,
+                    "error": f"Timeout: {e}",
+                    "location": location,
+                    "locationId": storage_id,
+                    "timestamp": datetime.now().isoformat()
+                })
+                
             except Exception as e:
                 log(f"Error: {e}")
+                # Check if it's a timeout-like error
+                if "timeout" in str(e).lower() or "stuck" in str(e).lower():
+                    log("Killing stuck browser...")
+                    if page:
+                        try:
+                            page.quit()
+                        except:
+                            pass
+                        del page
+                        page = None
+                    kill_chrome()
+                    force_gc()
+                    time.sleep(2)
+                
                 results.append({
                     "blocked": False,
                     "error": str(e),
@@ -393,7 +448,10 @@ def scrape_multiple(locations):
                 })
         
         if page:
-            page.quit()
+            try:
+                page.quit()
+            except:
+                pass
             del page
         force_gc()
         

@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 def load_env():
-    env_path = Path(__file__).parent.parent.parent / "server" / ".env"
+    env_path = Path(__file__).parent.parent / "server" / ".env"
     if env_path.exists():
         with open(env_path) as f:
             for line in f:
