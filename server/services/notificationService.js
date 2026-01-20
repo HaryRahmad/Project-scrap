@@ -54,18 +54,25 @@ class NotificationService {
 
   /**
    * Build notification message for user
+   * Shows location, available stock items with price
    */
   static buildMessage(locationName, products) {
-    const productList = products.slice(0, 5).map((p, i) =>
-      `${i + 1}. <b>${p.title}</b>${p.price ? ` - ${p.price}` : ''}`
-    ).join('\n');
+    const productList = products.slice(0, 5).map((p, i) => {
+      // Extract and clean title
+      const title = p.title.replace('Belum tersedia', '').trim();
+      // Extract price - clean up format
+      const price = p.price ? p.price.replace('Harga(Belum termasuk pajak)', '').trim() : '';
+      return price ? `  • ${title} (${price})` : `  • ${title}`;
+    }).join('\n');
 
-    return `🔔 <b>STOK TERSEDIA!</b>
+    const moreText = products.length > 5 ? `\n  (+${products.length - 5} lainnya)` : '';
 
-📦 <b>Produk:</b>
-${productList}
+    return `🔔 <b>STOK EMAS TERSEDIA!</b>
 
 📍 <b>Lokasi:</b> ${locationName}
+
+📦 <b>Tersedia:</b>
+${productList}${moreText}
 
 🔗 <a href="https://www.logammulia.com/id/purchase/gold">BELI SEKARANG →</a>`;
   }

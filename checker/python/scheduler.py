@@ -42,11 +42,11 @@ BASE_INTERVAL = 100  # 100 detik (~1.5 menit)
 RANDOM_VARIATION = 30  # +/- 30 detik
 
 # Operating hours (jam operasi) - 0-24 untuk disable
-OPERATING_START_HOUR = 0   # Disabled for testing
-OPERATING_END_HOUR = 24    # Disabled for testing
+OPERATING_START_HOUR = 8   # Disabled for testing
+OPERATING_END_HOUR = 20    # Disabled for testing
 
 # =====================================================
-
+bi
 def log(msg):
     ts = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
     try:
